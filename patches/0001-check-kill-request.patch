@@ -1,0 +1,56 @@
+diff --git a/bochs/cpu/event.cc b/bochs/cpu/event.cc
+index 5ffaecd..1af4da6 100644
+--- a/bochs/cpu/event.cc
++++ b/bochs/cpu/event.cc
+@@ -145,6 +145,9 @@ void BX_CPU_C::InterruptAcknowledge(void)
+ 
+   BX_INSTR_HWINTERRUPT(BX_CPU_ID, vector,
+       BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].selector.value, RIP);
++
++  if (bx_pc_system.kill_bochs_request) return;
++
+   interrupt(vector, BX_EXTERNAL_INTERRUPT, 0, 0);
+ 
+   BX_CPU_THIS_PTR prev_rip = RIP; // commit new RIP
+@@ -163,6 +166,9 @@ void BX_CPU_C::VirtualInterruptAcknowledge(void)
+ 
+   BX_INSTR_HWINTERRUPT(BX_CPU_ID, vector, 
+       BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].selector.value, RIP);
++
++  if (bx_pc_system.kill_bochs_request) return;
++
+   interrupt(vector, BX_EXTERNAL_INTERRUPT, 0, 0);
+ 
+   BX_CPU_THIS_PTR prev_rip = RIP; // commit new RIP
+@@ -306,6 +312,9 @@ bx_bool BX_CPU_C::handleAsyncEvent(void)
+     VMexit_Event(BX_NMI, 2, 0, 0);
+ #endif
+     BX_INSTR_HWINTERRUPT(BX_CPU_ID, 2, BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].selector.value, RIP);
++
++    if (bx_pc_system.kill_bochs_request) return;
++
+     interrupt(2, BX_NMI, 0, 0);
+   }
+ #if BX_SUPPORT_VMX
+diff --git a/bochs/cpu/exception.cc b/bochs/cpu/exception.cc
+index fa37e4e..8329a41 100644
+--- a/bochs/cpu/exception.cc
++++ b/bochs/cpu/exception.cc
+@@ -702,6 +702,8 @@ void BX_CPU_C::interrupt(Bit8u vector, unsigned type, bx_bool push_error, Bit16u
+ 
+   BX_INSTR_INTERRUPT(BX_CPU_ID, vector);
+ 
++  if (bx_pc_system.kill_bochs_request) return;
++
+   invalidate_prefetch_q();
+ 
+   bx_bool soft_int = 0;
+@@ -852,6 +854,8 @@ void BX_CPU_C::exception(unsigned vector, Bit16u error_code)
+ 
+   BX_INSTR_EXCEPTION(BX_CPU_ID, vector, error_code);
+ 
++  if (bx_pc_system.kill_bochs_request) return;
++
+ #if BX_DEBUGGER
+   bx_dbg_exception(BX_CPU_ID, vector, error_code);
+ #endif
